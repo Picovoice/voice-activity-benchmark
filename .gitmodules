@@ -1,0 +1,3 @@
+[submodule "engines/cobra"]
+	path = engines/cobra
+	url = ../cobra
