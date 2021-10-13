@@ -1,0 +1,6 @@
+*.pyc
+.idea/
+*.csv
+/*.wav
+/*.txt
+!requirements.txt
