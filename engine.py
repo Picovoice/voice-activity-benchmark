@@ -16,8 +16,7 @@ from enum import Enum
 
 import numpy as np
 import webrtcvad
-
-from engines import Cobra
+import pvcobra
 
 
 DEFAULT_SAMPLERATE = 16000
@@ -64,7 +63,7 @@ class CobraEngine(Engine):
     cache = dict()
 
     def __init__(self, sensitivity, access_key):
-        self._cobra = Cobra(access_key=access_key, library_path=os.path.join(self._repo_path, 'lib/linux/x86_64/libpv_cobra.so'))
+        self._cobra = pvcobra.Cobra(access_key=access_key, library_path=pvcobra.LIBRARY_PATH)
         self._threshold = sensitivity
 
     def process(self, pcm, frame_key):
@@ -87,10 +86,6 @@ class CobraEngine(Engine):
 
     def __str__(self):
         return 'Cobra'
-
-    @property
-    def _repo_path(self):
-        return os.path.join(os.path.dirname(__file__), 'engines/cobra')
 
 
 class RTCEngine(Engine):

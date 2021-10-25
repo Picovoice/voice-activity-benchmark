@@ -1,3 +1,0 @@
-[submodule "engines/cobra"]
-	path = engines/cobra
-	url = https://github.com/Picovoice/cobra.git
