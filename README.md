@@ -76,7 +76,7 @@ cmake -S runtime -B runtime/build && cmake --build runtime/build
 ## Accuracy
 
 Below is the result of running the benchmark framework. The plot below shows the receiver operating characteristic curve
-of different engines. This plot was generated with the Signal-To-Noise ratio of 0dB
+of different engines. This plot was generated with the Signal-To-Noise ratio of 0dB.
 
 ![](doc/img/summary.png)
 
