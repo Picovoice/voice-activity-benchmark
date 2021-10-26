@@ -88,6 +88,8 @@ class CobraEngine(Engine):
 
 
 class WebRTCEngine(Engine):
+    _FRAME_SEC = 0.03
+
     def __init__(self, threshold):
         self._vad = webrtcvad.Vad(int(threshold))
 
@@ -97,7 +99,7 @@ class WebRTCEngine(Engine):
         return self._vad.is_speech(pcm.tobytes(), DEFAULT_SAMPLERATE)
 
     def frame_length(self):
-        return int((DEFAULT_SAMPLERATE / 1000) * 30)  # 30ms
+        return int((DEFAULT_SAMPLERATE * self._FRAME_SEC))
 
     def release(self):
         pass

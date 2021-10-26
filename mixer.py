@@ -87,10 +87,10 @@ def _assemble_speech(speech_dataset):
     speech_parts = list()
     speech_frames = list()
 
-    silence_pcm = np.array([np.int16(0)] * SILENCE_SAMPLES)
-    silence_frames = np.array([np.int16(0)] * SILENCE_FRAMES)
+    silence_pcm = np.zeros(SILENCE_SAMPLES)
+    silence_frames = np.zeros(SILENCE_FRAMES)
 
-    for idx in range(0, speech_dataset.size()):
+    for idx in range(speech_dataset.size()):
         pcm = speech_dataset.get(idx)
         if len(pcm) % DEFAULT_FRAME_LEN:
             pcm = pcm[:-(len(pcm) % DEFAULT_FRAME_LEN)]

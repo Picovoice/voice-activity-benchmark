@@ -74,7 +74,6 @@ def run(engine_type, speech_path, label_path, access_key):
     threshold_info = Engine.threshold_info(engine_type)
     for threshold in np.arange(threshold_info.min, threshold_info.max + threshold_info.step, threshold_info.step):
         res[threshold] = run_threshold(pcm, labels, engine_type, threshold, access_key)
-        threshold += threshold_info.step
 
     return engine_type, res
 
