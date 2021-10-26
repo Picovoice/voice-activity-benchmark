@@ -30,11 +30,30 @@ class AudioLabels(Enum):
     VOICE = 2
 
 
+def _pcm_energy(pcm):
+    num_frames = pcm.size // DEFAULT_FRAME_LEN
+
+    pcm_frames = pcm[:(num_frames * DEFAULT_FRAME_LEN)].reshape((num_frames, DEFAULT_FRAME_LEN))
+    frames_power = (pcm_frames ** 2).sum(axis=1)
+
+    return frames_power.max()
+
+
+def _speech_scale(speech, noise, snr_db):
+    assert speech.shape[0] == noise.shape[0]
+
+    speech_energy = _pcm_energy(speech)
+    if speech_energy == 0:
+        return 0
+
+    return np.sqrt((_pcm_energy(noise) * (10 ** (snr_db / 10))) / speech_energy)
+
+
 def _max_abs(x):
     return max(np.max(x), np.abs(np.min(x)))
 
 
-def _mix_noise(speech_parts, noise_dataset):
+def _mix_noise(speech_parts, noise_dataset, snr_db):
     speech_length = sum(len(x) for x in speech_parts)
 
     noise_parts = list()
@@ -47,7 +66,7 @@ def _mix_noise(speech_parts, noise_dataset):
     start_index = 0
     for speech_part in speech_parts:
         end_index = start_index + len(speech_part)
-        speech_scale = 1 / _max_abs(speech_part) if _max_abs(speech_part) > 0 else 0
+        speech_scale = _speech_scale(speech_part, res[start_index:end_index], snr_db)
         res[start_index:end_index] += speech_part * speech_scale
         start_index = end_index
 
@@ -91,7 +110,7 @@ def _assemble_speech(speech_dataset):
     silence_frames = np.zeros(SILENCE_FRAMES)
 
     for idx in range(speech_dataset.size()):
-        pcm = speech_dataset.get(idx)
+        pcm = speech_dataset.get(idx, dtype=np.float32)
         if len(pcm) % DEFAULT_FRAME_LEN:
             pcm = pcm[:-(len(pcm) % DEFAULT_FRAME_LEN)]
         detected_speech_frames = _energy_detect_speech_frames(pcm=pcm)
@@ -110,9 +129,10 @@ def create_test_files(
         speech_path,
         label_path,
         speech_dataset,
-        noise_dataset):
+        noise_dataset,
+        snr_db=10):
     speech_parts, speech_frames = _assemble_speech(speech_dataset)
-    speech = _mix_noise(speech_parts, noise_dataset)
+    speech = _mix_noise(speech_parts, noise_dataset, snr_db)
     speech /= _max_abs(speech)
 
     soundfile.write(speech_path, speech, samplerate=Dataset.sample_rate())
