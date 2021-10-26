@@ -43,11 +43,11 @@ class Dataset(object):
         return 16000
 
     @classmethod
-    def create(cls, dataset, path, **kwargs):
+    def create(cls, dataset, path):
         if dataset is Datasets.DEMAND:
             return DEMANDDataset(path)
         elif dataset is Datasets.LIBRI_SPEECH:
-            return LibriSpeechDataset(path, *kwargs)
+            return LibriSpeechDataset(path)
         else:
             raise ValueError("cannot create dataset of type '%s'", dataset.value)
 

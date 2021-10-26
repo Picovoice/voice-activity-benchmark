@@ -10,12 +10,12 @@
 # specific language governing permissions and limitations under the License.
 #
 
-import numpy as np
-import soundfile
 from enum import Enum
 
-from dataset import Dataset
+import numpy as np
+import soundfile
 
+from dataset import Dataset
 
 DEFAULT_SAMPLERATE = 16000
 DEFAULT_FRAME_LEN = 512

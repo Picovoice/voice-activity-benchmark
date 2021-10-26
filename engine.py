@@ -10,15 +10,15 @@
 # specific language governing permissions and limitations under the License.
 #
 
-import os
 from collections import namedtuple
 from enum import Enum
 
 import numpy as np
-import webrtcvad
 import pvcobra
+import webrtcvad
 
 from mixer import DEFAULT_SAMPLERATE
+
 
 class Engines(Enum):
     WEBRTC = 'WebRTC'
@@ -51,10 +51,10 @@ class Engine(object):
     def create(engine, threshold, **kwargs):
         if engine is Engines.COBRA:
             if "access_key" not in kwargs:
-                ArgumentError("Cobra missing kwarg 'access_key'")
+                TypeError("Cobra missing kwarg 'access_key'")
             return CobraEngine(threshold, kwargs['access_key'])
         elif engine is Engines.WEBRTC:
-            return RTCEngine(threshold)
+            return WebRTCEngine(threshold)
         else:
             ValueError("cannot create engine of type '%s'", engine.value)
 
@@ -69,7 +69,6 @@ class CobraEngine(Engine):
     def process(self, pcm, frame_key):
         assert pcm.dtype == np.int16
 
-        voice_probability = None
         if frame_key in self.cache:
             voice_probability = self.cache[frame_key]
         else:
@@ -88,7 +87,7 @@ class CobraEngine(Engine):
         return 'Cobra'
 
 
-class RTCEngine(Engine):
+class WebRTCEngine(Engine):
     def __init__(self, threshold):
         self._vad = webrtcvad.Vad(int(threshold))
 

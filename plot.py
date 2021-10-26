@@ -25,7 +25,7 @@ def plot_roc_chart():
     for engine in Engines:
         engine = engine.value
 
-        with open(os.path.join(os.path.dirname(__file__), 'cobra_%s.csv' % engine), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), 'benchmark_%s.csv' % engine), 'r') as f:
             for line in f.readlines():
                 true_detect, false_alarm = [float(x) for x in line.strip('\n').split(', ')]
                 engine_true_detects[engine].append(true_detect)

@@ -13,20 +13,15 @@
 import argparse
 import logging
 import multiprocessing
-import soundfile
 
 from dataset import *
 from engine import *
-from mixer import create_test_files, AudioLabels
-
+from mixer import create_test_files, AudioLabels, DEFAULT_FRAME_LEN
 
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
 
 
-access_key = None
-
-
-def run_threshold(pcm, speech_frames, engine_type, threshold):
+def run_threshold(pcm, labels, engine_type, threshold, access_key):
     detector = Engine.create(engine_type, threshold=threshold, access_key=access_key)
 
     frame_length = detector.frame_length()
@@ -39,10 +34,10 @@ def run_threshold(pcm, speech_frames, engine_type, threshold):
 
     for i in range(num_frames):
         frame = pcm[(i * frame_length):((i + 1) * frame_length)]
-        speech_frame = ((i * frame_length) + (frame_length // 2)) // 512
+        label_idx = round((i * frame_length) / DEFAULT_FRAME_LEN)
 
-        is_speech_truth = int(speech_frames[speech_frame])
-        is_speech = detector.process(frame, f'{i}-{frame_length}')
+        is_speech_truth = int(labels[label_idx])
+        is_speech = detector.process(frame, '%d-%d' % (i, frame_length))
 
         if is_speech_truth == AudioLabels.VOICE.value:
             num_detect_frames += 1
@@ -59,7 +54,6 @@ def run_threshold(pcm, speech_frames, engine_type, threshold):
 
     detector.release()
 
-    pcm_length_frames = pcm.size / detector.frame_length()
     false_alarm_rate = num_false_alarms / num_silence_frames
     true_detect_rate = num_true_detects / num_detect_frames
 
@@ -69,21 +63,17 @@ def run_threshold(pcm, speech_frames, engine_type, threshold):
     return true_detect_rate, false_alarm_rate
 
 
-def run(engine_type, speech_path, label_path):
+def run(engine_type, speech_path, label_path, access_key):
     pcm, sample_rate = soundfile.read(speech_path, dtype=np.int16)
     assert sample_rate == Dataset.sample_rate()
 
-    speech_frames = list()
     with open(label_path, 'r') as f:
-        for line in f.readlines():
-            speech_frames.append(line.strip('\n'))
-
-    threshold_info = Engine.threshold_info(engine_type)
-    threshold = threshold_info.min
+        labels = f.read().strip('\n ').split('\n')
 
     res = dict()
-    while threshold <= threshold_info.max:
-        res[threshold] = run_threshold(pcm, speech_frames, engine_type, threshold)
+    threshold_info = Engine.threshold_info(engine_type)
+    for threshold in np.arange(threshold_info.min, threshold_info.max + threshold_info.step, threshold_info.step):
+        res[threshold] = run_threshold(pcm, labels, engine_type, threshold, access_key)
         threshold += threshold_info.step
 
     return engine_type, res
@@ -91,11 +81,12 @@ def run(engine_type, speech_path, label_path):
 
 def save(results):
     for engine, result in results:
-        path = os.path.join(os.path.dirname(__file__), 'cobra_%s.csv' % (engine.value))
+        path = os.path.join(os.path.dirname(__file__), 'benchmark_%s.csv' % engine.value)
         with open(path, 'w') as f:
             for threshold in sorted(result.keys()):
                 true_detect_rate, false_alarm_rate = result[threshold]
                 f.write('%f, %f\n' % (true_detect_rate, false_alarm_rate))
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -105,7 +96,6 @@ def main():
 
     args = parser.parse_args()
 
-    global access_key
     access_key = args.access_key
 
     speech_dataset = Dataset.create(Datasets.LIBRI_SPEECH, args.librispeech_dataset_path)
@@ -114,8 +104,8 @@ def main():
     noise_dataset = Dataset.create(Datasets.DEMAND, args.demand_dataset_path)
     logging.info('loaded demand dataset with %d examples' % noise_dataset.size())
 
-    speech_path = os.path.join(os.path.dirname(__file__), 'cobrabm_speech.wav')
-    label_path = os.path.join(os.path.dirname(__file__), 'cobrabm_labels.txt')
+    speech_path = os.path.join(os.path.dirname(__file__), 'benchmark_speech.wav')
+    label_path = os.path.join(os.path.dirname(__file__), 'benchmark_labels.txt')
     create_test_files(
         speech_path=speech_path,
         label_path=label_path,
@@ -123,7 +113,8 @@ def main():
         noise_dataset=noise_dataset)
 
     with multiprocessing.Pool() as pool:
-        save(pool.starmap(run, [(x, speech_path, label_path) for x in Engines]))
+        save(pool.starmap(run, [(x, speech_path, label_path, access_key) for x in Engines]))
+
 
 if __name__ == '__main__':
     main()
