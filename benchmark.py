@@ -17,7 +17,7 @@ import soundfile
 
 from dataset import *
 from engine import *
-from mixer import create_test_files, VoiceLabels
+from mixer import create_test_files, AudioLabels
 
 
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
@@ -26,8 +26,8 @@ logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=loggin
 access_key = None
 
 
-def run_sensitivity(pcm, speech_frames, engine_type, sensitivity):
-    detector = Engine.create(engine_type, sensitivity=sensitivity, access_key=access_key)
+def run_threshold(pcm, speech_frames, engine_type, threshold):
+    detector = Engine.create(engine_type, threshold=threshold, access_key=access_key)
 
     frame_length = detector.frame_length()
     num_frames = pcm.size // frame_length
@@ -44,18 +44,18 @@ def run_sensitivity(pcm, speech_frames, engine_type, sensitivity):
         is_speech_truth = int(speech_frames[speech_frame])
         is_speech = detector.process(frame, f'{i}-{frame_length}')
 
-        if is_speech_truth == VoiceLabels.VOICE.value:
+        if is_speech_truth == AudioLabels.VOICE.value:
             num_detect_frames += 1
-        elif is_speech_truth == VoiceLabels.SILENCE.value:
+        elif is_speech_truth == AudioLabels.SILENCE.value:
             num_silence_frames += 1
 
-        if is_speech and is_speech_truth == VoiceLabels.VOICE.value:
+        if is_speech and is_speech_truth == AudioLabels.VOICE.value:
             num_true_detects += 1
-        elif is_speech and is_speech_truth == VoiceLabels.SILENCE.value:
+        elif is_speech and is_speech_truth == AudioLabels.SILENCE.value:
             num_false_alarms += 1
 
         if i % (num_frames // 100) == 0:
-            logging.debug(f"{engine_type} {sensitivity} {i}/{num_frames}")
+            logging.debug(f"{engine_type} {threshold} {i}/{num_frames}")
 
     detector.release()
 
@@ -64,12 +64,12 @@ def run_sensitivity(pcm, speech_frames, engine_type, sensitivity):
     true_detect_rate = num_true_detects / num_detect_frames
 
     logging.info(
-        '[%s - %.4f] tdr: %f far: %f' % (engine_type.value, sensitivity, true_detect_rate, false_alarm_rate))
+        '[%s - %.4f] tdr: %f far: %f' % (engine_type.value, threshold, true_detect_rate, false_alarm_rate))
 
     return true_detect_rate, false_alarm_rate
 
 
-def run(engine_type):
+def run(engine_type, speech_path, label_path):
     pcm, sample_rate = soundfile.read(speech_path, dtype=np.int16)
     assert sample_rate == Dataset.sample_rate()
 
@@ -78,13 +78,13 @@ def run(engine_type):
         for line in f.readlines():
             speech_frames.append(line.strip('\n'))
 
-    sensitivity_info = Engine.sensitivity_info(engine_type)
-    sensitivity = sensitivity_info.min
+    threshold_info = Engine.threshold_info(engine_type)
+    threshold = threshold_info.min
 
     res = dict()
-    while sensitivity <= sensitivity_info.max:
-        res[sensitivity] = run_sensitivity(pcm, speech_frames, engine_type, sensitivity)
-        sensitivity += sensitivity_info.step
+    while threshold <= threshold_info.max:
+        res[threshold] = run_threshold(pcm, speech_frames, engine_type, threshold)
+        threshold += threshold_info.step
 
     return engine_type, res
 
@@ -93,18 +93,19 @@ def save(results):
     for engine, result in results:
         path = os.path.join(os.path.dirname(__file__), 'cobra_%s.csv' % (engine.value))
         with open(path, 'w') as f:
-            for sensitivity in sorted(result.keys()):
-                true_detect_rate, false_alarm_rate = result[sensitivity]
+            for threshold in sorted(result.keys()):
+                true_detect_rate, false_alarm_rate = result[threshold]
                 f.write('%f, %f\n' % (true_detect_rate, false_alarm_rate))
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--access_key', required=True)
+    parser.add_argument('--librispeech_dataset_path', required=True)
+    parser.add_argument('--demand_dataset_path', required=True)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--access_key', required=True)
-parser.add_argument('--librispeech_dataset_path', required=True)
-parser.add_argument('--demand_dataset_path', required=True)
-
-if __name__ == '__main__':
     args = parser.parse_args()
+
+    global access_key
     access_key = args.access_key
 
     speech_dataset = Dataset.create(Datasets.LIBRI_SPEECH, args.librispeech_dataset_path)
@@ -122,4 +123,7 @@ if __name__ == '__main__':
         noise_dataset=noise_dataset)
 
     with multiprocessing.Pool() as pool:
-        save(pool.map(run, [x for x in Engines]))
+        save(pool.starmap(run, [(x, speech_path, label_path) for x in Engines]))
+
+if __name__ == '__main__':
+    main()

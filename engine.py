@@ -18,20 +18,18 @@ import numpy as np
 import webrtcvad
 import pvcobra
 
-
-DEFAULT_SAMPLERATE = 16000
-
+from mixer import DEFAULT_SAMPLERATE
 
 class Engines(Enum):
     WEBRTC = 'WebRTC'
     COBRA = 'Cobra'
 
 
-SensitivityInfo = namedtuple('SensitivityInfo', 'min, max, step')
+ThresholdInfo = namedtuple('ThresholdInfo', 'min, max, step')
 
 
 class Engine(object):
-    def process(self, pcm):
+    def process(self, pcm, frame_key):
         raise NotImplementedError()
 
     def release(self):
@@ -41,20 +39,22 @@ class Engine(object):
         raise NotImplementedError()
 
     @staticmethod
-    def sensitivity_info(engine_type):
+    def threshold_info(engine_type):
         if engine_type is Engines.COBRA:
-            return SensitivityInfo(0.0, 1.0, 0.005)
+            return ThresholdInfo(0.0, 1.0, 0.005)
         elif engine_type is Engines.WEBRTC:
-            return SensitivityInfo(0, 3, 1)
+            return ThresholdInfo(0, 3, 1)
         else:
-            raise ValueError("no sensitivity range for '%s'", engine_type.value)
+            raise ValueError("no threshold range for '%s'", engine_type.value)
 
     @staticmethod
-    def create(engine, sensitivity, access_key=None):
+    def create(engine, threshold, **kwargs):
         if engine is Engines.COBRA:
-            return CobraEngine(sensitivity, access_key)
+            if "access_key" not in kwargs:
+                ArgumentError("Cobra missing kwarg 'access_key'")
+            return CobraEngine(threshold, kwargs['access_key'])
         elif engine is Engines.WEBRTC:
-            return RTCEngine(sensitivity)
+            return RTCEngine(threshold)
         else:
             ValueError("cannot create engine of type '%s'", engine.value)
 
@@ -62,9 +62,9 @@ class Engine(object):
 class CobraEngine(Engine):
     cache = dict()
 
-    def __init__(self, sensitivity, access_key):
+    def __init__(self, threshold, access_key):
         self._cobra = pvcobra.Cobra(access_key=access_key, library_path=pvcobra.LIBRARY_PATH)
-        self._threshold = sensitivity
+        self._threshold = threshold
 
     def process(self, pcm, frame_key):
         assert pcm.dtype == np.int16
@@ -89,8 +89,8 @@ class CobraEngine(Engine):
 
 
 class RTCEngine(Engine):
-    def __init__(self, sensitivity):
-        self._vad = webrtcvad.Vad(int(sensitivity))
+    def __init__(self, threshold):
+        self._vad = webrtcvad.Vad(int(threshold))
 
     def process(self, pcm, frame_key):
         assert pcm.dtype == np.int16

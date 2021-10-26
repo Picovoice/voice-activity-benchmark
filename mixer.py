@@ -15,13 +15,16 @@ import soundfile
 from enum import Enum
 
 from dataset import Dataset
-from engine import Engine
 
 
+DEFAULT_SAMPLERATE = 16000
 DEFAULT_FRAME_LEN = 512
+SILENCE_SEC = 20
+SILENCE_SAMPLES = DEFAULT_FRAME_LEN * ((SILENCE_SEC * DEFAULT_SAMPLERATE) // DEFAULT_FRAME_LEN)
+SILENCE_FRAMES = SILENCE_SAMPLES // DEFAULT_FRAME_LEN
 
 
-class VoiceLabels(Enum):
+class AudioLabels(Enum):
     SILENCE = 0
     UNKNOWN = 1
     VOICE = 2
@@ -63,19 +66,19 @@ def _energy_detect_speech_frames(pcm, voice_threshold=1e-2, silence_threshold=5e
     powers = (frames ** 2).sum(axis=1)
     powers /= powers.max()
 
-    labels = np.ones_like(powers, dtype=np.int16) * VoiceLabels.UNKNOWN.value
-    labels[np.where(powers >= voice_threshold)] = VoiceLabels.VOICE.value
-    labels[np.where(powers <= silence_threshold)] = VoiceLabels.SILENCE.value
+    labels = np.ones_like(powers, dtype=np.int16) * AudioLabels.UNKNOWN.value
+    labels[np.where(powers >= voice_threshold)] = AudioLabels.VOICE.value
+    labels[np.where(powers <= silence_threshold)] = AudioLabels.SILENCE.value
 
     for x in range(len(labels)):
-        if labels[x] == 2:
+        if labels[x] == AudioLabels.VOICE.value:
             for y in range(radius):
                 if x + y < len(labels):
-                    if labels[x+y] != VoiceLabels.VOICE.value:
-                        labels[x+y] = VoiceLabels.UNKNOWN.value
+                    if labels[x + y] != AudioLabels.VOICE.value:
+                        labels[x + y] = AudioLabels.UNKNOWN.value
                 if x - y >= 0:
-                    if labels[x-y] != VoiceLabels.VOICE.value:
-                        labels[x-y] = VoiceLabels.UNKNOWN.value
+                    if labels[x - y] != AudioLabels.VOICE.value:
+                        labels[x - y] = AudioLabels.UNKNOWN.value
 
     return labels
 
@@ -84,9 +87,8 @@ def _assemble_speech(speech_dataset):
     speech_parts = list()
     speech_frames = list()
 
-    num_silence_frames = 600
-    silence_pcm = np.array([np.int16(0)] * (num_silence_frames * DEFAULT_FRAME_LEN))
-    silence_frames = np.array([np.int16(0)] * num_silence_frames)
+    silence_pcm = np.array([np.int16(0)] * SILENCE_SAMPLES)
+    silence_frames = np.array([np.int16(0)] * SILENCE_FRAMES)
 
     for idx in range(0, speech_dataset.size()):
         pcm = speech_dataset.get(idx)
