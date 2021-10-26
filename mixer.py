@@ -130,7 +130,7 @@ def create_test_files(
         label_path,
         speech_dataset,
         noise_dataset,
-        snr_db=10):
+        snr_db=0):
     speech_parts, speech_frames = _assemble_speech(speech_dataset)
     speech = _mix_noise(speech_parts, noise_dataset, snr_db)
     speech /= _max_abs(speech)

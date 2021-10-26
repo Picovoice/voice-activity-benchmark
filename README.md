@@ -14,7 +14,7 @@ we noted that there is a need for such a tool to empower customers to make data-
 [LibriSpeech](http://www.openslr.org/12/) (test_clean portion) is used as the voice dataset.
 It can be downloaded from [OpenSLR](http://www.openslr.org/resources/12/test-clean.tar.gz).
 
-In order to simulate real-world situations, the data is mixed with noise (at 10 dB SNR). For this purpose, we use
+In order to simulate real-world situations, the data is mixed with noise (at 0dB SNR). For this purpose, we use
 [DEMAND](https://asa.scitation.org/doi/abs/10.1121/1.4799597) dataset which has noise recording in 18 different
 environments (e.g. kitchen, office, traffic, etc.). Recordings that contained distinct voice data is filtered out.
 It can be downloaded from [Kaggle](https://www.kaggle.com/aanhari/demand-dataset).
@@ -31,8 +31,8 @@ And [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules 
 # Metric
 
 We measured the accuracy of the voice activity engines using false positive and true positive rates.
-The false positive rate is measured as the number of false positives detected over the total number of false positives.
-Likewise, true positive rate is measured as the number of true positives detected over the total number of true positives.
+The false positive rate is measured as the number of false positive frames detected over the total number of non-voice frames.
+Likewise, true positive rate is measured as the number of true positive frames detected over the total number of voice-frames.
 Using these definitions we plot a receiver operating characteristic curve which can be used to characterize performance differences between engines.
 
 
@@ -76,7 +76,7 @@ cmake -S runtime -B runtime/build && cmake --build runtime/build
 ## Accuracy
 
 Below is the result of running the benchmark framework. The plot below shows the receiver operating characteristic curve
-of different engines. The greater the area under the curve the more accurate the engine is.
+of different engines. This plot was generated with the Signal-To-Noise ratio of 0dB
 
 ![](doc/img/summary.png)
 
