@@ -4,3 +4,4 @@
 /*.wav
 /*.txt
 !requirements.txt
+venv

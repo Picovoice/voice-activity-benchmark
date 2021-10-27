@@ -1,0 +1,5 @@
+matplotlib
+numpy
+soundfile
+webrtcvad==2.0.10
+pvcobra==1.0.7
