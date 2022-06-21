@@ -43,12 +43,11 @@ Using these definitions we plot a receiver operating characteristic curve which 
 The benchmark has been developed on Ubuntu 18.04 with Python 3.8. Clone the repository using
 
 ```bash
-git clone --recurse-submodules git@github.com:Picovoice/voice-activity-benchmark.git
+git clone https://github.com/Picovoice/voice-activity-benchmark.git
 ```
 
 Make sure the Python packages in the [requirements.txt](/requirements.txt) are properly installed for your Python
 version as Python bindings are used for running the engines.
-
 
 ### Running the Benchmark
 
@@ -58,13 +57,7 @@ Usage information can be retrieved via
 python benchmark.py -h
 ```
 
-The benchmark can be run using the following command from the root of the repository
-
-```bash
-python benchmark.py --librispeech_dataset_path ${LIBRISPEECH_DATASET_PATH} --demand_dataset_path ${DEMAND_DATASET_PATH} --access_key ${COBRA_ACCESS_KEY}
-```
-
-The runtime benchmark is contained in the [runtime](/runtime) folder. Use the following commands to build and run the runtime bechmark:
+The runtime benchmark is contained in the [runtime](/runtime) folder. Use the following commands to build and run the runtime benchmark:
 ```bash
 git clone --recursive https://github.com/Picovoice/cobra.git runtime/cobra
 cmake -S runtime -B runtime/build && cmake --build runtime/build
@@ -84,4 +77,4 @@ of different engines. This plot was generated with the Signal-To-Noise ratio of 
 ## Runtime
 
 On a Raspberry Pi Zero, Cobra measured a realtime factor of `0.05`, or about `5%` CPU usage.
-On a laptop with a Intel(R) Core(TM) i7-1185G7, Cobra measured a realtime factor of `0.0006`.
+On a laptop with an Intel(R) Core(TM) i7-1185G7, Cobra measured a realtime factor of `0.0006`.

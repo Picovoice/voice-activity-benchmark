@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Picovoice Inc.
+# Copyright 2021-2022 Picovoice Inc.
 #
 # You may not use this file except in compliance with the license.
 # A copy of the license is located in the "LICENSE" file accompanying this source.
@@ -12,7 +12,6 @@
 
 import argparse
 import logging
-import multiprocessing
 
 from dataset import *
 from engine import *
@@ -89,9 +88,10 @@ def save(results):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--access_key', required=True)
     parser.add_argument('--librispeech_dataset_path', required=True)
     parser.add_argument('--demand_dataset_path', required=True)
+    parser.add_argument('--engine', choices=[x.value for x in Engines])
+    parser.add_argument('--access_key', default=None)
 
     args = parser.parse_args()
 
@@ -105,14 +105,15 @@ def main():
 
     speech_path = os.path.join(os.path.dirname(__file__), 'benchmark_speech.wav')
     label_path = os.path.join(os.path.dirname(__file__), 'benchmark_labels.txt')
-    create_test_files(
-        speech_path=speech_path,
-        label_path=label_path,
-        speech_dataset=speech_dataset,
-        noise_dataset=noise_dataset)
 
-    with multiprocessing.Pool() as pool:
-        save(pool.starmap(run, [(x, speech_path, label_path, access_key) for x in Engines]))
+    if not os.path.exists(speech_path) or not os.path.exists(label_path):
+        create_test_files(
+            speech_path=speech_path,
+            label_path=label_path,
+            speech_dataset=speech_dataset,
+            noise_dataset=noise_dataset)
+
+    run(engine_type=Engines(args.engine), speech_path=speech_path, label_path=label_path, access_key=access_key)
 
 
 if __name__ == '__main__':
