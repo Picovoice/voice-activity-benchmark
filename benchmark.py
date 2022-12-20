@@ -69,12 +69,12 @@ def run(engine_type, speech_path, label_path, access_key):
     with open(label_path, 'r') as f:
         labels = f.read().strip('\n ').split('\n')
 
-    res = dict()
+    res = list()
     threshold_info = Engine.threshold_info(engine_type)
     for threshold in np.arange(threshold_info.min, threshold_info.max + threshold_info.step, threshold_info.step):
-        res[threshold] = run_threshold(pcm, labels, engine_type, threshold, access_key)
+        res.append((threshold, run_threshold(pcm, labels, engine_type, threshold, access_key)))
 
-    return engine_type, res
+    return res
 
 
 def save(results):
@@ -113,7 +113,15 @@ def main():
             speech_dataset=speech_dataset,
             noise_dataset=noise_dataset)
 
-    run(engine_type=Engines(args.engine), speech_path=speech_path, label_path=label_path, access_key=access_key)
+    res = run(
+        engine_type=Engines(args.engine),
+        speech_path=speech_path,
+        label_path=label_path,
+        access_key=access_key)
+
+    with open(os.path.join(os.path.dirname(__file__), f'benchmark_{args.engine}.csv'), 'w') as f:
+        for threshold, (true_detect_rate, false_alarm_raet) in res:
+            f.write(f"{true_detect_rate}, {false_alarm_raet}\n")
 
 
 if __name__ == '__main__':
