@@ -2,4 +2,4 @@ matplotlib
 numpy
 soundfile
 webrtcvad==2.0.10
-pvcobra==1.1.3
+pvcobra==1.2.0
