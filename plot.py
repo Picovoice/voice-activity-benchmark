@@ -18,14 +18,18 @@ from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 from engine import Engines
 
 
-def plot_roc_chart():
+def plot_roc_chart(save_to_file=None):
     engine_true_detects = dict([(e.value, [1]) for e in Engines])
     engine_false_alarms = dict([(e.value, [1]) for e in Engines])
 
     for engine in Engines:
         engine = engine.value
+        file_name = os.path.join(os.path.dirname(__file__), 'benchmark_%s.csv' % engine)
+        if not os.path.exists(file_name):
+            print(f"WARNING: {file_name} does not exist. Skipping engine {engine}")
+            continue
 
-        with open(os.path.join(os.path.dirname(__file__), 'benchmark_%s.csv' % engine), 'r') as f:
+        with open(file_name, 'r') as f:
             for line in f.readlines():
                 true_detect, false_alarm = [float(x) for x in line.strip('\n').split(', ')]
                 engine_true_detects[engine].append(true_detect)
@@ -58,8 +62,17 @@ def plot_roc_chart():
     ax.grid(which='minor', color='#CCCCCC', linestyle=':')
 
     fig.tight_layout()
-    plt.show()
+
+    if save_to_file is not None:
+        plt.savefig(save_to_file)
+        print(f'ROC chart saved to {save_to_file}')
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':
-    plot_roc_chart()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('save_to_file_name', nargs='?', default=None, help='Save the plot to a file instead of showing it (optional)')
+    args = parser.parse_args()
+    plot_roc_chart(args.save_to_file_name)
