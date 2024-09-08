@@ -12,6 +12,7 @@
 
 import argparse
 import logging
+import time
 
 from dataset import *
 from engine import *
@@ -30,6 +31,7 @@ def run_threshold(pcm, labels, engine_type, threshold, access_key):
     num_silence_frames = 0
     num_true_detects = 0
     num_false_alarms = 0
+    run_start_time = time.monotonic()
 
     for i in range(num_frames):
         frame = pcm[(i * frame_length):((i + 1) * frame_length)]
@@ -51,13 +53,15 @@ def run_threshold(pcm, labels, engine_type, threshold, access_key):
         if i % (num_frames // 100) == 0:
             logging.debug(f"{engine_type} {threshold} {i}/{num_frames}")
 
+    run_end_time = time.monotonic()
     detector.release()
 
     false_alarm_rate = num_false_alarms / num_silence_frames
     true_detect_rate = num_true_detects / num_detect_frames
+    run_time = run_end_time - run_start_time
 
     logging.info(
-        '[%s - %.4f] tdr: %f far: %f' % (engine_type.value, threshold, true_detect_rate, false_alarm_rate))
+        '[%s - %.4f] tdr: %f far: %f run_time: %f' % (engine_type.value, threshold, true_detect_rate, false_alarm_rate, run_time))
 
     return true_detect_rate, false_alarm_rate
 
