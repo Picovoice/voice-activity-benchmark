@@ -22,15 +22,18 @@ ThresholdInfo = namedtuple('ThresholdInfo', 'min, max, step')
 
 class Engines(Enum):
     COBRA = 'Cobra'
+    SILERO = 'Silero'
     WEBRTC = 'WebRTC'
 
 engine_create_map = {
     Engines.COBRA: lambda threshold, access_key, **kwargs: CobraEngine(threshold, access_key),
+    Engines.SILERO: lambda threshold, **kwargs: SileroEngine(threshold),
     Engines.WEBRTC: lambda threshold, **kwargs: WebRTCEngine(threshold),
 }
 
 threshold_info_map = {
     Engines.COBRA: ThresholdInfo(0.0, 1.0, 0.005),
+    Engines.SILERO: ThresholdInfo(0.0, 1.0, 0.005),
     Engines.WEBRTC: ThresholdInfo(0, 3, 1),
 }
 
@@ -87,6 +90,36 @@ class CobraEngine(Engine):
 
     def release(self):
         self._cobra.delete()
+
+
+class SileroEngine(Engine):
+    _cache = dict()
+
+    def __init__(self, threshold):
+        from silero_vad import load_silero_vad
+        self._model = load_silero_vad(onnx=True)
+        self._threshold = threshold
+        import torch
+        self._torch = torch
+
+    def process(self, pcm, frame_key):
+        assert pcm.dtype == np.int16
+
+        if frame_key in self._cache:
+            voice_probability = self._cache[frame_key]
+        else:
+            pcm_float = pcm.astype(np.float32) / 32768.0
+            voice_probability = self._model(self._torch.from_numpy(pcm_float), DEFAULT_SAMPLERATE).item()
+            self._cache[frame_key] = voice_probability
+
+        return (voice_probability >= self._threshold)
+
+    def frame_length(self):
+        assert DEFAULT_SAMPLERATE in (16000, 8000)
+        return 512 if DEFAULT_SAMPLERATE == 16000 else 256
+
+    def release(self):
+        del self._model
 
 
 class WebRTCEngine(Engine):

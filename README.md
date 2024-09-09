@@ -22,10 +22,14 @@ It can be downloaded from [Kaggle](https://www.kaggle.com/datasets/aanhari/deman
 
 # Voice Activity Engines
 
-Two voice-activity engines are used:
-[py-webrtcvad](https://github.com/wiseman/py-webrtcvad) (Python bindings to the WEBRTC VAD)
-which can be installed using [PyPI](https://pypi.org/project/webrtcvad/).
-And [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules in this repository.
+The following voice-activity engines are used:
+
+- [py-webrtcvad](https://github.com/wiseman/py-webrtcvad) (Python bindings to the WEBRTC VAD)
+which can be installed using [PyPI](https://pypi.org/project/webrtcvad/). Version 2.0.10.
+Binary wheels are available for easy installation by using fork [py-webrtcvad-wheels](https://github.com/daanzu/py-webrtcvad-wheels) at [PyPI](https://pypi.org/project/webrtcvad-wheels/).
+- [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules in this repository,
+or can be installed using [PyPI](https://pypi.org/project/pvcobra/). Version 1.2.0.
+- [Silero VAD](https://github.com/snakers4/silero-vad) which can be installed using [PyPI](https://pypi.org/project/silero-vad/). Version 5.1.
 
 
 # Metric

@@ -3,3 +3,4 @@ numpy
 soundfile
 webrtcvad==2.0.10
 pvcobra==1.2.0
+silero-vad==5.1
