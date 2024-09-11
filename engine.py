@@ -32,8 +32,8 @@ engine_create_map = {
 }
 
 threshold_info_map = {
-    Engines.COBRA: ThresholdInfo(0.0, 1.0, 0.005),
-    Engines.SILERO: ThresholdInfo(0.0, 1.0, 0.005),
+    Engines.COBRA: ThresholdInfo(0.0, 1.0, 0.001),
+    Engines.SILERO: ThresholdInfo(0.0, 1.0, 0.001),
     Engines.WEBRTC: ThresholdInfo(0, 3, 1),
 }
 
