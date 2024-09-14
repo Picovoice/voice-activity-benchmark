@@ -30,6 +30,7 @@ Binary wheels are available for easy installation by using fork [py-webrtcvad-wh
 - [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules in this repository,
 or can be installed using [PyPI](https://pypi.org/project/pvcobra/). Version 1.2.0.
 - [Silero VAD](https://github.com/snakers4/silero-vad) which can be installed using [PyPI](https://pypi.org/project/silero-vad/). Version 5.1.
+- WebRTC RNN VAD, through a dummy implementation using a [CLI demo](https://github.com/daanzu/webrtc_rnnvad).
 
 
 # Metric

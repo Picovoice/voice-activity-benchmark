@@ -24,17 +24,20 @@ class Engines(Enum):
     COBRA = 'Cobra'
     SILERO = 'Silero'
     WEBRTC = 'WebRTC'
+    WEBRTCRNNCLIDUMMY = 'WebRTCRNNCLIDummy'
 
 engine_create_map = {
     Engines.COBRA: lambda threshold, access_key, **kwargs: CobraEngine(threshold, access_key),
     Engines.SILERO: lambda threshold, **kwargs: SileroEngine(threshold),
     Engines.WEBRTC: lambda threshold, **kwargs: WebRTCEngine(threshold),
+    Engines.WEBRTCRNNCLIDUMMY: lambda threshold, **kwargs: WebRTCRNNCLIDummyEngine(threshold),
 }
 
 threshold_info_map = {
     Engines.COBRA: ThresholdInfo(0.0, 1.0, 0.001),
     Engines.SILERO: ThresholdInfo(0.0, 1.0, 0.001),
     Engines.WEBRTC: ThresholdInfo(0, 3, 1),
+    Engines.WEBRTCRNNCLIDUMMY: ThresholdInfo(0.0, 1.0, 0.005),
 }
 
 
@@ -139,3 +142,30 @@ class WebRTCEngine(Engine):
 
     def release(self):
         del self._vad
+
+
+class WebRTCRNNCLIDummyEngine(Engine):
+    """ Dummy implementation of WebRTCRNNVAD that reads precomputed probabilities from a file generated from the CLI: daanzu/webrtc_rnnvad: webrtc_rnnvad (https://github.com/daanzu/webrtc_rnnvad) """
+
+    def __init__(self, threshold):
+        self._threshold = threshold
+        file_name = 'webrtcrnnvad_probs.bin'
+        # fwrite(&vad_probability, sizeof(float), 1, vad_probs_file);
+        with open(file_name, 'rb') as f:
+            self._voice_probabilities = np.frombuffer(f.read(), dtype=np.float32)
+        self._voice_probabilities_index = 0
+
+    def process(self, pcm, frame_key):
+        assert pcm.dtype == np.int16
+
+        voice_probability = self._voice_probabilities[self._voice_probabilities_index]
+        self._voice_probabilities_index += 1
+
+        return (voice_probability >= self._threshold)
+
+    def frame_length(self):
+        return 160
+
+    def release(self):
+        assert self._voice_probabilities_index == len(self._voice_probabilities)
+        del self._voice_probabilities
