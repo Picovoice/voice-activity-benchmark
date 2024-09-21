@@ -81,5 +81,15 @@ of different engines. This plot was generated with the Signal-To-Noise ratio of 
 
 ## Runtime
 
+The table below shows the approximate runtime factor (RTF) of the engines while generating the accuracy ROC curve plot above on an Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz. The RTF is calculated as the ratio of the total time taken to process the audio files to the total duration of the audio files.
+
+| Engine          | RTF      |
+|-----------------|----------|
+| py-webrtcvad    | 0.000224 |
+| Cobra           | 0.004222 |
+| Silero VAD      | 0.007192 |
+| WebRTC RNN VAD  | 0.003880 |
+
+For Cobra only, the RTF can be computed using the runtime benchmark provided in the [Usage](#usage) section.
 On a Raspberry Pi Zero, Cobra measured a realtime factor of `0.05`, or about `5%` CPU usage.
 On a laptop with an Intel(R) Core(TM) i7-1185G7, Cobra measured a realtime factor of `0.0006`.
