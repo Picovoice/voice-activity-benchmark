@@ -17,15 +17,20 @@ It can be downloaded from [OpenSLR](http://www.openslr.org/resources/12/test-cle
 In order to simulate real-world situations, the data is mixed with noise (at 0dB SNR). For this purpose, we use
 [DEMAND](https://asa.scitation.org/doi/abs/10.1121/1.4799597) dataset which has noise recording in 18 different
 environments (e.g. kitchen, office, traffic, etc.). Recordings that contained distinct voice data is filtered out.
-It can be downloaded from [Kaggle](https://www.kaggle.com/aanhari/demand-dataset).
+It can be downloaded from [Kaggle](https://www.kaggle.com/datasets/aanhari/demand-dataset).
 
 
 # Voice Activity Engines
 
-Two voice-activity engines are used:
-[py-webrtcvad](https://github.com/wiseman/py-webrtcvad) (Python bindings to the WEBRTC VAD)
-which can be installed using [PyPI](https://pypi.org/project/webrtcvad/).
-And [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules in this repository.
+The following voice-activity engines are used:
+
+- [py-webrtcvad](https://github.com/wiseman/py-webrtcvad) (Python bindings to the WEBRTC VAD)
+which can be installed using [PyPI](https://pypi.org/project/webrtcvad/). Version 2.0.10.
+Binary wheels are available for easy installation by using fork [py-webrtcvad-wheels](https://github.com/daanzu/py-webrtcvad-wheels) at [PyPI](https://pypi.org/project/webrtcvad-wheels/).
+- [Cobra](https://github.com/Picovoice/Cobra) which is included as submodules in this repository,
+or can be installed using [PyPI](https://pypi.org/project/pvcobra/). Version 1.2.0.
+- [Silero VAD](https://github.com/snakers4/silero-vad) which can be installed using [PyPI](https://pypi.org/project/silero-vad/). Version 5.1.
+- WebRTC RNN VAD, through a dummy implementation using a [CLI demo](https://github.com/daanzu/webrtc_rnnvad).
 
 
 # Metric
@@ -76,5 +81,15 @@ of different engines. This plot was generated with the Signal-To-Noise ratio of 
 
 ## Runtime
 
+The table below shows the approximate runtime factor (RTF) of the engines while generating the accuracy ROC curve plot above on an Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz. The RTF is calculated as the ratio of the total time taken to process the audio files to the total duration of the audio files.
+
+| Engine          | RTF      |
+|-----------------|----------|
+| py-webrtcvad    | 0.000224 |
+| Cobra           | 0.004222 |
+| Silero VAD      | 0.007192 |
+| WebRTC RNN VAD  | 0.003880 |
+
+For Cobra only, the RTF can be computed using the runtime benchmark provided in the [Usage](#usage) section.
 On a Raspberry Pi Zero, Cobra measured a realtime factor of `0.05`, or about `5%` CPU usage.
 On a laptop with an Intel(R) Core(TM) i7-1185G7, Cobra measured a realtime factor of `0.0006`.

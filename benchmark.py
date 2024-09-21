@@ -12,6 +12,7 @@
 
 import argparse
 import logging
+import time
 
 from dataset import *
 from engine import *
@@ -20,7 +21,7 @@ from mixer import create_test_files, AudioLabels, DEFAULT_FRAME_LEN
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
 
 
-def run_threshold(pcm, labels, engine_type, threshold, access_key):
+def run_threshold(pcm, sample_rate, labels, engine_type, threshold, access_key):
     detector = Engine.create(engine_type, threshold=threshold, access_key=access_key)
 
     frame_length = detector.frame_length()
@@ -30,6 +31,7 @@ def run_threshold(pcm, labels, engine_type, threshold, access_key):
     num_silence_frames = 0
     num_true_detects = 0
     num_false_alarms = 0
+    run_start_time = time.monotonic()
 
     for i in range(num_frames):
         frame = pcm[(i * frame_length):((i + 1) * frame_length)]
@@ -51,13 +53,17 @@ def run_threshold(pcm, labels, engine_type, threshold, access_key):
         if i % (num_frames // 100) == 0:
             logging.debug(f"{engine_type} {threshold} {i}/{num_frames}")
 
+    run_end_time = time.monotonic()
     detector.release()
 
     false_alarm_rate = num_false_alarms / num_silence_frames
     true_detect_rate = num_true_detects / num_detect_frames
+    run_time = run_end_time - run_start_time
+    pcm_duration = len(pcm) / sample_rate
+    rtf = run_time / pcm_duration
 
     logging.info(
-        '[%s - %.4f] tdr: %f far: %f' % (engine_type.value, threshold, true_detect_rate, false_alarm_rate))
+        '[%s - %.4f] tdr: %f far: %f run_time: %f rtf: %f' % (engine_type.value, threshold, true_detect_rate, false_alarm_rate, run_time, rtf))
 
     return true_detect_rate, false_alarm_rate
 
@@ -72,7 +78,7 @@ def run(engine_type, speech_path, label_path, access_key):
     res = list()
     threshold_info = Engine.threshold_info(engine_type)
     for threshold in np.arange(threshold_info.min, threshold_info.max + threshold_info.step, threshold_info.step):
-        res.append((threshold, run_threshold(pcm, labels, engine_type, threshold, access_key)))
+        res.append((threshold, run_threshold(pcm, sample_rate, labels, engine_type, threshold, access_key)))
 
     return res
 
