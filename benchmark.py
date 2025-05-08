@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2022 Picovoice Inc.
+# Copyright 2021-2025 Picovoice Inc.
 #
 # You may not use this file except in compliance with the license.
 # A copy of the license is located in the "LICENSE" file accompanying this source.
@@ -120,8 +120,8 @@ def main():
         access_key=access_key)
 
     with open(os.path.join(os.path.dirname(__file__), f'benchmark_{args.engine}.csv'), 'w') as f:
-        for threshold, (true_detect_rate, false_alarm_raet) in res:
-            f.write(f"{true_detect_rate}, {false_alarm_raet}\n")
+        for threshold, (true_detect_rate, false_alarm_rate) in res:
+            f.write(f"{true_detect_rate}, {false_alarm_rate}\n")
 
 
 if __name__ == '__main__':
