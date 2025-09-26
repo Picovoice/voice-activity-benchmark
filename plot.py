@@ -13,7 +13,10 @@
 import os
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
+from matplotlib.ticker import (
+    AutoMinorLocator,
+    MultipleLocator
+)
 
 from engine import Engines
 

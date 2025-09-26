@@ -61,6 +61,7 @@ class DEMANDDataset(Dataset):
         super(DEMANDDataset, self).__init__()
 
         blocklist = [
+            "DLIVING",
             "OMEETING",
             "PCAFETER",
             "PRESTO",
