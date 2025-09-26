@@ -15,14 +15,20 @@ from enum import Enum
 
 import numpy as np
 import pvcobra
+import torch
 import webrtcvad
+from silero_vad import load_silero_vad
 
-from mixer import DEFAULT_SAMPLERATE
+from mixer import (
+    DEFAULT_FRAME_LEN,
+    DEFAULT_SAMPLERATE
+)
 
 
 class Engines(Enum):
     WEBRTC = 'WebRTC'
     COBRA = 'Cobra'
+    SILERO = 'Silero'
 
 
 ThresholdInfo = namedtuple('ThresholdInfo', 'min, max, step')
@@ -44,6 +50,8 @@ class Engine(object):
             return ThresholdInfo(0.0, 1.0, 0.005)
         elif engine_type is Engines.WEBRTC:
             return ThresholdInfo(0, 3, 1)
+        elif engine_type is Engines.SILERO:
+            return ThresholdInfo(0.0, 1.0, 0.005)
         else:
             raise ValueError("no threshold range for '%s'", engine_type.value)
 
@@ -55,8 +63,10 @@ class Engine(object):
             return CobraEngine(threshold, kwargs['access_key'])
         elif engine is Engines.WEBRTC:
             return WebRTCEngine(threshold)
+        elif engine is Engines.SILERO:
+            return SileroEngine(threshold)
         else:
-            ValueError("cannot create engine of type '%s'", engine.value)
+            raise ValueError("cannot create engine of type '%s'", engine.value)
 
 
 class CobraEngine(Engine):
@@ -106,3 +116,33 @@ class WebRTCEngine(Engine):
 
     def __str__(self):
         return 'WebRTC'
+
+
+class SileroEngine(Engine):
+    cache = dict()
+
+    def __init__(self, threshold):
+        self._model = load_silero_vad(onnx=True)
+        self._threshold = threshold
+
+    def process(self, pcm, frame_key):
+        assert pcm.dtype == np.int16
+
+        if frame_key in self.cache:
+            voice_probability = self.cache[frame_key]
+        else:
+            pcm_float = pcm.astype(np.float32) / 32767.0
+            voice_probability = self._model(torch.from_numpy(pcm_float), DEFAULT_SAMPLERATE).item()
+            self.cache[frame_key] = voice_probability
+
+        return voice_probability >= self._threshold
+
+    def frame_length(self):
+        assert DEFAULT_SAMPLERATE == 16000
+        return DEFAULT_FRAME_LEN
+
+    def release(self):
+        del self._model
+
+    def __str__(self):
+        return 'Silero'

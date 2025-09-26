@@ -1,0 +1,7 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "https://pubs.aip.org/**"
+        }
+    ]
+}
