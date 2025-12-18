@@ -2,5 +2,5 @@ matplotlib==3.10.6
 numpy==2.3.3
 soundfile==0.13.1
 webrtcvad==2.0.10
-pvcobra==2.0.5
+pvcobra==3.0.0
 silero-vad==6.0.0
