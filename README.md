@@ -83,8 +83,8 @@ of different engines. The top shows the overall graph. The bottom shows the top-
 
 ## Runtime
 
-On a Raspberry Pi Zero, Cobra measured a realtime factor of `0.05`, or about `5%` CPU usage.
-On a laptop with an Intel(R) Core(TM) i7-1185G7, Cobra measured a realtime factor of `0.0006`.
+On a Raspberry Pi Zero, Cobra measured a realtime factor of `0.037`, or about `3.7%` CPU usage.
+On a laptop with an Intel® Core™ Ultra 7 155H, Cobra measured a realtime factor of `0.0002`.
 On an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`), the following RTFs were recorded:
 ![](doc/img/rtf.png)
 
